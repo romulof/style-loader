@@ -16,47 +16,49 @@ module.exports = function (css, currentUrl) {
 
 	// get current url
 	currentUrl = currentUrl || (typeof window !== "undefined" && window.location && window.location.href) || null;
-	if (typeof currentUrl != "string") {
+	if (typeof currentUrl !== "string") {
 		throw new Error("fixUrls requires a current url");
 	}
 
-	//blank or null?
-	if (!css || typeof css !== "string")
-	  return css;
+	// blank or null?
+	if (!css || typeof css !== "string") {
+		return css;
+	}
 
-	//base url
-	var baseUrl = currentUrl.match(/^([a-z]+:)?(\/\/)?[^\/]+/)[0];
-	var protocol = baseUrl.split(":")[0];
-	var currentUrlPath = baseUrl + (currentUrl.replace(baseUrl, "")).replace(/\/[^\/]+$/, "") + "/";
+	// base url
+	var protocol = window.location.protocol;
+	var baseUrl = window.location.protocol + '//' + window.location.host;
+	var currentPath = window.location.pathname.replace(/\/[^\/]+$/, "/");
+	var currentUrlPath = baseUrl + currentPath;
 
 	//convert each url(...)
-	var fixedCss = css.replace(/url *\( *(.+?) *\)/g, function(fullMatch, origUrl){
+	var fixedCss = css.replace(/url *\( *(.+?) *\)/g, function(fullMatch, origUrl) {
 		//strip quotes (if they exist)
 		var unquotedOrigUrl = origUrl
-			.replace(/^"(.*)"$/, function(o,$1){ return $1; })
-			.replace(/^'(.*)'$/, function(o,$1){ return $1; });
+			.replace(/^"(.*)"$/, function(o, $1){ return $1; })
+			.replace(/^'(.*)'$/, function(o, $1){ return $1; });
 
 		//already a full url? no change
-		if (/^(data:|http:\/\/|https:\/\/|file:\/\/\/)/i.test(unquotedOrigUrl))
+		if (/^(#|data:|http:\/\/|https:\/\/|file:\/\/\/)/i.test(unquotedOrigUrl))
 		  return fullMatch;
 
 		//convert the url to a full url
 		var newUrl = unquotedOrigUrl;
 		if (newUrl.indexOf("//") === 0) {
-		  //add protocol
+			// add protocol
 			newUrl = protocol + ":" +newUrl;
-		}else if (newUrl.indexOf("/") === 0){
-			//path should be relative to the base url
+		} else if (newUrl.indexOf("/") === 0){
+			// path should be relative to the base url
 			newUrl = baseUrl + newUrl;
-		}else{
-			//path should be relative to the current directory
+		} else {
+			// path should be relative to the current directory
 			newUrl = currentUrlPath + newUrl.replace(/^\.\//, "");
 		}
 
-		//send back the fixed url(...)
-		return "url("+JSON.stringify(newUrl)+")";
+		// send back the fixed url(...)
+		return "url(" + JSON.stringify(newUrl) + ")";
 	});
 
-	//send back the fixed css
+	// send back the fixed css
 	return fixedCss;
 };
